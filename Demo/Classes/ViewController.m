@@ -2,7 +2,7 @@
 //  ViewController.m
 //  SVProgressHUD, https://github.com/SVProgressHUD/SVProgressHUD
 //
-//  Copyright (c) 2011-2018 Sam Vermette and contributors. All rights reserved.
+//  Copyright (c) 2011-2023 Sam Vermette and contributors. All rights reserved.
 //
 
 #import "ViewController.h"
@@ -61,10 +61,14 @@
 
 - (void)handleNotification:(NSNotification *)notification {
     NSLog(@"Notification received: %@", notification.name);
-    NSLog(@"Status user info key: %@", notification.userInfo[SVProgressHUDStatusUserInfoKey]);
+    if (notification.userInfo[SVProgressHUDStatusUserInfoKey] != nil) {
+        NSLog(@"Status user info key: %@", notification.userInfo[SVProgressHUDStatusUserInfoKey]);
+    }
     
     if([notification.name isEqualToString:SVProgressHUDDidReceiveTouchEventNotification]){
         [self dismiss];
+    } else if([notification.name isEqualToString:SVProgressHUDDidDisappearNotification] && self.activityCount > 0){
+        self.activityCount = 0;
     }
 }
 
@@ -96,12 +100,10 @@ static float progress = 0.0f;
 
     if(progress < 1.0f){
         [self performSelector:@selector(increaseProgress) withObject:nil afterDelay:0.1f];
+    } else if (self.activityCount > 1) {
+        [self performSelector:@selector(popActivity) withObject:nil afterDelay:0.4f];
     } else {
-        if (self.activityCount > 1) {
-            [self performSelector:@selector(popActivity) withObject:nil afterDelay:0.4f];
-        } else {
-            [self performSelector:@selector(dismiss) withObject:nil afterDelay:0.4f];
-        }
+        [self performSelector:@selector(dismiss) withObject:nil afterDelay:0.4f];
     }
 }
 
@@ -146,10 +148,16 @@ static float progress = 0.0f;
 
 - (IBAction)changeStyle:(id)sender {
     UISegmentedControl *segmentedControl = (UISegmentedControl*)sender;
-    if(segmentedControl.selectedSegmentIndex == 0){
-        [SVProgressHUD setDefaultStyle:SVProgressHUDStyleLight];
-    } else {
-        [SVProgressHUD setDefaultStyle:SVProgressHUDStyleDark];
+    switch(segmentedControl.selectedSegmentIndex){
+        case 0:
+            [SVProgressHUD setDefaultStyle:SVProgressHUDStyleLight];
+            break;
+        case 1:
+            [SVProgressHUD setDefaultStyle:SVProgressHUDStyleDark];
+            break;
+        case 2:
+            [SVProgressHUD setDefaultStyle:SVProgressHUDStyleAutomatic];
+            break;
     }
 }
 
